@@ -19,7 +19,7 @@ function Block (network) {
   this.bits = 0
   this.nonce = 0
   this.network = network
-  if (coins.isZcash(network)) {
+  if (coins.isZcash(network) || coins.isAsofe(network)) {
     this.finalSaplingRoot = null
     this.solutionSize = 0
     this.solution = null
@@ -61,7 +61,7 @@ Block.fromBuffer = function (buffer, network) {
   block.version = readInt32()
   block.prevHash = readSlice(32)
   block.merkleRoot = readSlice(32)
-  if (coins.isZcash(network)) {
+  if (coins.isZcash(network) || coins.isAsofe(network)) {
     block.finalSaplingRoot = readSlice(32)
   }
   block.timestamp = readUInt32()
@@ -70,6 +70,10 @@ Block.fromBuffer = function (buffer, network) {
     block.nonce = readSlice(32)
     block.solutionSize = readVarInt()
     block.solution = readSlice(1344)
+  } else if (coins.isAsofe(network)) {
+    block.nonce = readSlice(32)
+    block.solutionSize = readVarInt()
+    block.solution = readSlice(100)
   } else {
     // Not sure sure why the nonce is read as UInt 32 and not as a slice
     block.nonce = readUInt32()
@@ -95,7 +99,7 @@ Block.fromBuffer = function (buffer, network) {
 }
 
 Block.prototype.byteLength = function (headersOnly) {
-  if (coins.isZcash(this.network)) {
+  if (coins.isZcash(this.network) || coins.isAsofe(this.network)) {
     if (headersOnly) {
       return Block.ZCASH_HEADER_BYTE_SIZE
     }
@@ -154,12 +158,12 @@ Block.prototype.toBuffer = function (headersOnly) {
   writeInt32(this.version)
   writeSlice(this.prevHash)
   writeSlice(this.merkleRoot)
-  if (coins.isZcash(this.network)) {
+  if (coins.isZcash(this.network) || coins.isAsofe(this.network)) {
     writeSlice(this.finalSaplingRoot)
   }
   writeUInt32(this.timestamp)
   writeUInt32(this.bits)
-  if (coins.isZcash(this.network)) {
+  if (coins.isZcash(this.network) || coins.isAsofe(this.network)) {
     writeSlice(this.nonce)
     varuint.encode(this.solutionSize, buffer, offset)
     offset += varuint.encode.bytes
